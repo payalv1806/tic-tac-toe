@@ -1,11 +1,31 @@
-let boxes = document.querySelectorAll('.box');
-let resetBtn = document.querySelector("#reset-btn");
-let newGameBtn = document.querySelector("#new-btn");
-let msgContainer = document.querySelector(".msg-container");
-let msg = document.querySelector("#msg");
+const boxes = document.querySelectorAll(".box");
+const resetBtn = document.querySelector("#reset-btn");
+const newGameBtn = document.querySelector("#new-btn");
+const msgContainer = document.querySelector(".msg-container");
+const msg = document.querySelector("#msg");
 
-let turnO = true //playerX, playerO;
+// Mode selection & Matchup UI elements
+const startModal = document.querySelector("#start-modal");
+const modeAiCard = document.querySelector("#mode-ai-card");
+const modeFriendCard = document.querySelector("#mode-friend-card");
+const changeModeBtn = document.querySelector("#change-mode-btn");
+const modeBadgeText = document.querySelector("#mode-badge-text");
+
+const p1Card = document.querySelector("#player1-card");
+const p2Card = document.querySelector("#player2-card");
+const p1Name = document.querySelector("#p1-name");
+const p2Name = document.querySelector("#p2-name");
+const p1Avatar = document.querySelector("#p1-avatar");
+const p2Avatar = document.querySelector("#p2-avatar");
+const p1Status = document.querySelector("#p1-status");
+const p2Status = document.querySelector("#p2-status");
+
+let isVsComputer = true;
+let turnO = true; // true: Player O, false: Player X
 let count = 0;
+let isGameOver = false;
+let isAiThinking = false;
+
 const winPatterns = [
   [0, 1, 2],
   [0, 3, 6],
@@ -14,82 +34,248 @@ const winPatterns = [
   [2, 5, 8],
   [2, 4, 6],
   [3, 4, 5],
-  [6, 7, 8]
+  [6, 7, 8],
 ];
 
-const gameDraw = () => {
-  msg.innerText = `Game was a Draw.`;
-  msgContainer.classList.remove("hide");
-  disableBoxes();
+// Switch Mode (Computer AI vs 2 Players)
+const setMode = (vsComputer) => {
+  isVsComputer = vsComputer;
+  startModal.classList.add("hide");
+
+  if (isVsComputer) {
+    document.body.classList.add("mode-computer");
+    document.body.classList.remove("mode-pvp");
+    modeBadgeText.innerText = "🤖 Cyber AI Match";
+    p1Name.innerText = "You";
+    p1Avatar.innerText = "👤";
+    p2Name.innerText = "Cyber AI";
+    p2Avatar.innerText = "🤖";
+  } else {
+    document.body.classList.add("mode-pvp");
+    document.body.classList.remove("mode-computer");
+    modeBadgeText.innerText = "👥 2 Players Match";
+    p1Name.innerText = "Player 1";
+    p1Avatar.innerText = "👤";
+    p2Name.innerText = "Player 2";
+    p2Avatar.innerText = "👥";
+  }
+
+  resetGame();
 };
 
+// Update active turn badges and cards
+const updateStatus = () => {
+  if (isGameOver) {
+    p1Card.classList.remove("active-turn");
+    p2Card.classList.remove("active-turn", "thinking");
+    return;
+  }
 
+  if (turnO) {
+    p1Card.classList.add("active-turn");
+    p2Card.classList.remove("active-turn", "thinking");
+    p1Status.innerText = isVsComputer ? "Your Turn" : "Turn";
+    p2Status.innerText = "Waiting";
+  } else {
+    p1Card.classList.remove("active-turn");
+    p2Card.classList.add("active-turn");
+    p1Status.innerText = "Waiting";
 
-const resetGame = () => {
-  turnO = true;
-  count = 0;
-  enableBoxes();
-  msgContainer.classList.add("hide");
+    if (isVsComputer && isAiThinking) {
+      p2Card.classList.add("thinking");
+      p2Status.innerText = "Thinking...";
+    } else {
+      p2Card.classList.remove("thinking");
+      p2Status.innerText = "Turn";
+    }
+  }
 };
 
-
-
-
-boxes.forEach((box) => {
-  box.addEventListener('click', () => {
-  if(turnO) { //player0
-    box.innerText= "O";
-    turnO = false;
-  } else { //playerX
-    box.innerText= "X";
-    turnO = true;
-  }
-  box.disabled = true;
-
-  count++;
-
-  let isWinner = checkWinner();
-  if (count === 9 && !isWinner) {
-    gameDraw();
-  }
-  })
-});
 const disableBoxes = () => {
-  for (let box of boxes){
+  boxes.forEach((box) => {
     box.disabled = true;
-  }
+  });
 };
 
 const enableBoxes = () => {
-  for (let box of boxes){
+  boxes.forEach((box) => {
     box.disabled = false;
     box.innerText = "";
-  }
+  });
+};
+
+const gameDraw = () => {
+  isGameOver = true;
+  msg.innerText = isVsComputer ? "🤝 It's a Draw!" : "Game was a Draw.";
+  msgContainer.classList.remove("hide");
+  disableBoxes();
+  updateStatus();
 };
 
 const showWinner = (winner) => {
-  msg.innerText = `Congratulations, winner is ${winner}`;
+  isGameOver = true;
+  if (isVsComputer) {
+    if (winner === "O") {
+      msg.innerText = "🎉 Congratulations, You Won!";
+    } else {
+      msg.innerText = "🤖 Cyber AI Won! Better luck next time!";
+    }
+  } else {
+    msg.innerText = `Congratulations, winner is ${winner}`;
+  }
   msgContainer.classList.remove("hide");
+  disableBoxes();
+  updateStatus();
 };
+
 const checkWinner = () => {
   for (const pattern of winPatterns) {
-    console.log(boxes[pattern[0]].innerText, boxes[pattern[1]].innerText, boxes[pattern[2]].innerText);
-    let pos1Val = boxes[pattern[0]].innerText;
-    let pos2Val = boxes[pattern[1]].innerText;
-    let pos3Val = boxes[pattern[2]].innerText;
+    const pos1Val = boxes[pattern[0]].innerText;
+    const pos2Val = boxes[pattern[1]].innerText;
+    const pos3Val = boxes[pattern[2]].innerText;
 
     if (pos1Val !== "" && pos1Val === pos2Val && pos2Val === pos3Val) {
       showWinner(pos1Val);
-      disableBoxes();
       return true;
     }
   }
   return false;
 };
- 
-newGameBtn.addEventListener("click", () => {
-  resetGame();
+
+// Check for 2-in-a-row opportunity to either win or block
+const findWinningSpot = (symbol) => {
+  for (const pattern of winPatterns) {
+    const [a, b, c] = pattern;
+    const vals = [boxes[a].innerText, boxes[b].innerText, boxes[c].innerText];
+    const symbolMatches = vals.filter((val) => val === symbol).length;
+    const emptyMatches = vals.filter((val) => val === "").length;
+
+    if (symbolMatches === 2 && emptyMatches === 1) {
+      if (boxes[a].innerText === "") return a;
+      if (boxes[b].innerText === "") return b;
+      if (boxes[c].innerText === "") return c;
+    }
+  }
+  return null;
+};
+
+// Intelligent computer move decision logic
+const getComputerChoice = () => {
+  // 1. Check if Computer (X) can win immediately
+  const winMove = findWinningSpot("X");
+  if (winMove !== null) return winMove;
+
+  // 2. Block Player (O) from winning
+  const blockMove = findWinningSpot("O");
+  if (blockMove !== null) return blockMove;
+
+  // 3. Prioritize center spot
+  if (boxes[4].innerText === "") return 4;
+
+  // 4. Prioritize corners
+  const corners = [0, 2, 6, 8].filter((idx) => boxes[idx].innerText === "");
+  if (corners.length > 0) {
+    return corners[Math.floor(Math.random() * corners.length)];
+  }
+
+  // 5. Pick any remaining open spot
+  const remaining = [];
+  boxes.forEach((box, idx) => {
+    if (box.innerText === "") remaining.push(idx);
+  });
+  if (remaining.length > 0) {
+    return remaining[Math.floor(Math.random() * remaining.length)];
+  }
+
+  return null;
+};
+
+// Execute AI Move
+const makeComputerMove = () => {
+  if (isGameOver) return;
+
+  const choice = getComputerChoice();
+  if (choice !== null) {
+    const targetBox = boxes[choice];
+    targetBox.innerText = "X";
+    targetBox.disabled = true;
+    count++;
+    turnO = true;
+  }
+
+  isAiThinking = false;
+
+  const isWinner = checkWinner();
+  if (count === 9 && !isWinner) {
+    gameDraw();
+  } else if (!isWinner) {
+    updateStatus();
+  }
+};
+
+const resetGame = () => {
+  turnO = true;
+  count = 0;
+  isGameOver = false;
+  isAiThinking = false;
+  enableBoxes();
+  msgContainer.classList.add("hide");
+  updateStatus();
+};
+
+// Box click interactions
+boxes.forEach((box) => {
+  box.addEventListener("click", () => {
+    if (isAiThinking || isGameOver || box.innerText !== "") return;
+
+    if (isVsComputer) {
+      // Single Player Mode: Human is O
+      box.innerText = "O";
+      box.disabled = true;
+      count++;
+      turnO = false;
+
+      const isWinner = checkWinner();
+      if (count === 9 && !isWinner) {
+        gameDraw();
+      } else if (!isWinner) {
+        isAiThinking = true;
+        updateStatus();
+        setTimeout(makeComputerMove, 500);
+      }
+    } else {
+      // 2 Players Mode (Pass & Play)
+      if (turnO) {
+        box.innerText = "O";
+        turnO = false;
+      } else {
+        box.innerText = "X";
+        turnO = true;
+      }
+      box.disabled = true;
+      count++;
+
+      const isWinner = checkWinner();
+      if (count === 9 && !isWinner) {
+        gameDraw();
+      } else if (!isWinner) {
+        updateStatus();
+      }
+    }
+  });
 });
-resetBtn.addEventListener("click", () => {
-  resetGame();
+
+// Mode Selection Popup interactions
+modeAiCard.addEventListener("click", () => setMode(true));
+modeFriendCard.addEventListener("click", () => setMode(false));
+
+// Change Mode Button triggers popup
+changeModeBtn.addEventListener("click", () => {
+  startModal.classList.remove("hide");
 });
+
+newGameBtn.addEventListener("click", resetGame);
+resetBtn.addEventListener("click", resetGame);
+
+// Initial setup
+updateStatus();
