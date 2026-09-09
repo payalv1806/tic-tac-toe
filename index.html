@@ -25,7 +25,7 @@
           </div>
           <div class="card-content">
             <h3>Play with Computer</h3>
-            <p>Challenge the Cyber AI in a smart solo battle</p>
+            <p>Challenge the Cyber AI with selectable difficulties</p>
           </div>
           <span class="card-arrow">→</span>
         </button>
@@ -64,6 +64,25 @@
       <button id="change-mode-btn" class="change-mode-btn">
         <span>⚙️</span> Mode
       </button>
+    </div>
+
+    <!-- Win Streak Tracker (Only in Computer Mode) -->
+    <div class="streak-container" id="streak-container">
+      <div class="streak-pill">
+        <span class="streak-icon">🔥</span>
+        <span class="streak-text">Win Streak: <strong id="current-streak">0</strong></span>
+        <span class="streak-divider">•</span>
+        <span class="streak-best">Best: <strong id="best-streak">0</strong></span>
+      </div>
+    </div>
+
+    <!-- AI Difficulty Bar (Only in Computer Mode) -->
+    <div class="difficulty-container" id="difficulty-container">
+      <div class="difficulty-bar">
+        <button class="diff-btn" data-level="easy">🟢 Easy</button>
+        <button class="diff-btn active" data-level="medium">🟡 Medium</button>
+        <button class="diff-btn" data-level="impossible">🔴 Impossible</button>
+      </div>
     </div>
 
     <!-- Live Players Matchup Dashboard -->

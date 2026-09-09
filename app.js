@@ -20,11 +20,23 @@ const p2Avatar = document.querySelector("#p2-avatar");
 const p1Status = document.querySelector("#p1-status");
 const p2Status = document.querySelector("#p2-status");
 
+// Streak & Difficulty UI elements
+const streakContainer = document.querySelector("#streak-container");
+const currentStreakElem = document.querySelector("#current-streak");
+const bestStreakElem = document.querySelector("#best-streak");
+const difficultyContainer = document.querySelector("#difficulty-container");
+const diffBtns = document.querySelectorAll(".diff-btn");
+
 let isVsComputer = true;
 let turnO = true; // true: Player O, false: Player X
 let count = 0;
 let isGameOver = false;
 let isAiThinking = false;
+
+// Persistent state
+let currentDifficulty = localStorage.getItem("ttt_difficulty") || "medium";
+let currentStreak = parseInt(localStorage.getItem("ttt_current_streak") || "0", 10);
+let bestStreak = parseInt(localStorage.getItem("ttt_best_streak") || "0", 10);
 
 const winPatterns = [
   [0, 1, 2],
@@ -36,6 +48,25 @@ const winPatterns = [
   [3, 4, 5],
   [6, 7, 8],
 ];
+
+// Update Win Streak Display
+const updateStreakDisplay = () => {
+  currentStreakElem.innerText = currentStreak;
+  bestStreakElem.innerText = bestStreak;
+};
+
+// Switch Active Difficulty
+const setDifficulty = (level) => {
+  currentDifficulty = level;
+  localStorage.setItem("ttt_difficulty", level);
+  diffBtns.forEach((btn) => {
+    if (btn.getAttribute("data-level") === level) {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
+    }
+  });
+};
 
 // Switch Mode (Computer AI vs 2 Players)
 const setMode = (vsComputer) => {
@@ -50,6 +81,8 @@ const setMode = (vsComputer) => {
     p1Avatar.innerText = "👤";
     p2Name.innerText = "Cyber AI";
     p2Avatar.innerText = "🤖";
+    streakContainer.classList.remove("hide");
+    difficultyContainer.classList.remove("hide");
   } else {
     document.body.classList.add("mode-pvp");
     document.body.classList.remove("mode-computer");
@@ -58,6 +91,8 @@ const setMode = (vsComputer) => {
     p1Avatar.innerText = "👤";
     p2Name.innerText = "Player 2";
     p2Avatar.innerText = "👥";
+    streakContainer.classList.add("hide");
+    difficultyContainer.classList.add("hide");
   }
 
   resetGame();
@@ -101,6 +136,7 @@ const enableBoxes = () => {
   boxes.forEach((box) => {
     box.disabled = false;
     box.innerText = "";
+    box.classList.remove("box-o", "box-x");
   });
 };
 
@@ -116,8 +152,20 @@ const showWinner = (winner) => {
   isGameOver = true;
   if (isVsComputer) {
     if (winner === "O") {
-      msg.innerText = "🎉 Congratulations, You Won!";
+      currentStreak++;
+      if (currentStreak > bestStreak) {
+        bestStreak = currentStreak;
+        localStorage.setItem("ttt_best_streak", bestStreak);
+      }
+      localStorage.setItem("ttt_current_streak", currentStreak);
+      updateStreakDisplay();
+
+      const streakNote = currentStreak > 1 ? ` 🔥 ${currentStreak} Win Streak!` : "";
+      msg.innerText = `🎉 Congratulations, You Won!${streakNote}`;
     } else {
+      currentStreak = 0;
+      localStorage.setItem("ttt_current_streak", currentStreak);
+      updateStreakDisplay();
       msg.innerText = "🤖 Cyber AI Won! Better luck next time!";
     }
   } else {
@@ -143,51 +191,136 @@ const checkWinner = () => {
 };
 
 // Check for 2-in-a-row opportunity to either win or block
-const findWinningSpot = (symbol) => {
+const findWinningSpot = (boardArray, symbol) => {
   for (const pattern of winPatterns) {
     const [a, b, c] = pattern;
-    const vals = [boxes[a].innerText, boxes[b].innerText, boxes[c].innerText];
+    const vals = [boardArray[a], boardArray[b], boardArray[c]];
     const symbolMatches = vals.filter((val) => val === symbol).length;
     const emptyMatches = vals.filter((val) => val === "").length;
 
     if (symbolMatches === 2 && emptyMatches === 1) {
-      if (boxes[a].innerText === "") return a;
-      if (boxes[b].innerText === "") return b;
-      if (boxes[c].innerText === "") return c;
+      if (boardArray[a] === "") return a;
+      if (boardArray[b] === "") return b;
+      if (boardArray[c] === "") return c;
     }
   }
   return null;
 };
 
-// Intelligent computer move decision logic
-const getComputerChoice = () => {
-  // 1. Check if Computer (X) can win immediately
-  const winMove = findWinningSpot("X");
+// Evaluate Terminal state for Minimax
+const checkTerminal = (board) => {
+  for (const [a, b, c] of winPatterns) {
+    if (board[a] !== "" && board[a] === board[b] && board[b] === board[c]) {
+      return board[a];
+    }
+  }
+  if (board.every((cell) => cell !== "")) return "tie";
+  return null;
+};
+
+// Unbeatable Minimax Algorithm
+const minimax = (board, depth, isMaximizing) => {
+  const result = checkTerminal(board);
+  if (result === "X") return 10 - depth;
+  if (result === "O") return depth - 10;
+  if (result === "tie") return 0;
+
+  if (isMaximizing) {
+    let maxEval = -Infinity;
+    for (let i = 0; i < 9; i++) {
+      if (board[i] === "") {
+        board[i] = "X";
+        const evaluation = minimax(board, depth + 1, false);
+        board[i] = "";
+        maxEval = Math.max(maxEval, evaluation);
+      }
+    }
+    return maxEval;
+  } else {
+    let minEval = Infinity;
+    for (let i = 0; i < 9; i++) {
+      if (board[i] === "") {
+        board[i] = "O";
+        const evaluation = minimax(board, depth + 1, true);
+        board[i] = "";
+        minEval = Math.min(minEval, evaluation);
+      }
+    }
+    return minEval;
+  }
+};
+
+const getMinimaxMove = (boardArray) => {
+  let bestScore = -Infinity;
+  let bestMoves = [];
+
+  // Optimal instant opening for speed
+  if (boardArray[4] === "" && boardArray.filter((c) => c !== "").length <= 1) {
+    return 4;
+  }
+
+  for (let i = 0; i < 9; i++) {
+    if (boardArray[i] === "") {
+      boardArray[i] = "X";
+      const score = minimax(boardArray, 0, false);
+      boardArray[i] = "";
+      if (score > bestScore) {
+        bestScore = score;
+        bestMoves = [i];
+      } else if (score === bestScore) {
+        bestMoves.push(i);
+      }
+    }
+  }
+  return bestMoves[Math.floor(Math.random() * bestMoves.length)];
+};
+
+// Medium Strategy: Win -> Block -> Center -> Corners -> Random
+const getMediumMove = (boardArray) => {
+  const winMove = findWinningSpot(boardArray, "X");
   if (winMove !== null) return winMove;
 
-  // 2. Block Player (O) from winning
-  const blockMove = findWinningSpot("O");
+  const blockMove = findWinningSpot(boardArray, "O");
   if (blockMove !== null) return blockMove;
 
-  // 3. Prioritize center spot
-  if (boxes[4].innerText === "") return 4;
+  if (boardArray[4] === "") return 4;
 
-  // 4. Prioritize corners
-  const corners = [0, 2, 6, 8].filter((idx) => boxes[idx].innerText === "");
+  const corners = [0, 2, 6, 8].filter((idx) => boardArray[idx] === "");
   if (corners.length > 0) {
     return corners[Math.floor(Math.random() * corners.length)];
   }
 
-  // 5. Pick any remaining open spot
   const remaining = [];
-  boxes.forEach((box, idx) => {
-    if (box.innerText === "") remaining.push(idx);
+  boardArray.forEach((val, idx) => {
+    if (val === "") remaining.push(idx);
   });
-  if (remaining.length > 0) {
-    return remaining[Math.floor(Math.random() * remaining.length)];
-  }
+  return remaining[Math.floor(Math.random() * remaining.length)];
+};
 
-  return null;
+// Easy Strategy: 70% random, 30% medium
+const getEasyMove = (boardArray) => {
+  const emptySpots = [];
+  boardArray.forEach((val, idx) => {
+    if (val === "") emptySpots.push(idx);
+  });
+
+  if (Math.random() < 0.7) {
+    return emptySpots[Math.floor(Math.random() * emptySpots.length)];
+  }
+  return getMediumMove(boardArray);
+};
+
+// Intelligent computer move decision logic according to difficulty
+const getComputerChoice = () => {
+  const currentBoard = Array.from(boxes).map((b) => b.innerText);
+
+  if (currentDifficulty === "impossible") {
+    return getMinimaxMove(currentBoard);
+  } else if (currentDifficulty === "easy") {
+    return getEasyMove(currentBoard);
+  } else {
+    return getMediumMove(currentBoard);
+  }
 };
 
 // Execute AI Move
@@ -195,9 +328,10 @@ const makeComputerMove = () => {
   if (isGameOver) return;
 
   const choice = getComputerChoice();
-  if (choice !== null) {
+  if (choice !== undefined && choice !== null) {
     const targetBox = boxes[choice];
     targetBox.innerText = "X";
+    targetBox.classList.add("box-x");
     targetBox.disabled = true;
     count++;
     turnO = true;
@@ -231,6 +365,7 @@ boxes.forEach((box) => {
     if (isVsComputer) {
       // Single Player Mode: Human is O
       box.innerText = "O";
+      box.classList.add("box-o");
       box.disabled = true;
       count++;
       turnO = false;
@@ -241,15 +376,17 @@ boxes.forEach((box) => {
       } else if (!isWinner) {
         isAiThinking = true;
         updateStatus();
-        setTimeout(makeComputerMove, 500);
+        setTimeout(makeComputerMove, 450);
       }
     } else {
       // 2 Players Mode (Pass & Play)
       if (turnO) {
         box.innerText = "O";
+        box.classList.add("box-o");
         turnO = false;
       } else {
         box.innerText = "X";
+        box.classList.add("box-x");
         turnO = true;
       }
       box.disabled = true;
@@ -262,6 +399,14 @@ boxes.forEach((box) => {
         updateStatus();
       }
     }
+  });
+});
+
+// Difficulty button handlers
+diffBtns.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    setDifficulty(btn.getAttribute("data-level"));
+    resetGame();
   });
 });
 
@@ -278,4 +423,6 @@ newGameBtn.addEventListener("click", resetGame);
 resetBtn.addEventListener("click", resetGame);
 
 // Initial setup
+setDifficulty(currentDifficulty);
+updateStreakDisplay();
 updateStatus();
