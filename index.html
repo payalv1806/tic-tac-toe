@@ -1,140 +1,16 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tic Tac Toe Game</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body class="mode-computer"> 
-  <!-- Starting Mode Selection Popup -->
-  <div class="start-modal-overlay" id="start-modal">
-    <div class="start-modal-card">
-      <div class="modal-header">
-        <span class="modal-icon">🎮</span>
-        <h2>Choose Game Mode</h2>
-        <p>Who would you like to battle against?</p>
-      </div>
-
-      <div class="mode-cards-container">
-        <!-- Option 1: Play with Computer -->
-        <button class="mode-selection-card" id="mode-ai-card">
-          <div class="card-badge ai-badge">AI Mode</div>
-          <div class="card-icon-wrapper ai-icon-wrapper">
-            <span class="card-icon">🤖</span>
-          </div>
-          <div class="card-content">
-            <h3>Play with Computer</h3>
-            <p>Challenge the Cyber AI with selectable difficulties</p>
-          </div>
-          <span class="card-arrow">→</span>
-        </button>
-
-        <!-- Option 2: Play with Friend -->
-        <button class="mode-selection-card" id="mode-friend-card">
-          <div class="card-badge friend-badge">PvP Mode</div>
-          <div class="card-icon-wrapper friend-icon-wrapper">
-            <span class="card-icon">👥</span>
-          </div>
-          <div class="card-content">
-            <h3>Play with Friend</h3>
-            <p>Classic pass & play battle for two players</p>
-          </div>
-          <span class="card-arrow">→</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Game Over / Winner Modal -->
-  <div class="msg-container hide">
-    <p id="msg">Winner!</p>
-    <button id="new-btn">Play Again</button>
-  </div>
-
-  <h1>Tic Tac Toe</h1>
-
-  <main>
-    <!-- Top Action Bar -->
-    <div class="top-bar">
-      <div class="mode-pill" id="mode-badge">
-        <span class="mode-pill-dot"></span>
-        <span id="mode-badge-text">🤖 Cyber AI Match</span>
-      </div>
-      <button id="change-mode-btn" class="change-mode-btn">
-        <span>⚙️</span> Mode
-      </button>
-    </div>
-
-    <!-- Win Streak Tracker (Only in Computer Mode) -->
-    <div class="streak-container" id="streak-container">
-      <div class="streak-pill">
-        <span class="streak-icon">🔥</span>
-        <span class="streak-text">Win Streak: <strong id="current-streak">0</strong></span>
-        <span class="streak-divider">•</span>
-        <span class="streak-best">Best: <strong id="best-streak">0</strong></span>
-      </div>
-    </div>
-
-    <!-- AI Difficulty Bar (Only in Computer Mode) -->
-    <div class="difficulty-container" id="difficulty-container">
-      <div class="difficulty-bar">
-        <button class="diff-btn" data-level="easy">🟢 Easy</button>
-        <button class="diff-btn active" data-level="medium">🟡 Medium</button>
-        <button class="diff-btn" data-level="impossible">🔴 Impossible</button>
-      </div>
-    </div>
-
-    <!-- Live Players Matchup Dashboard -->
-    <div class="players-dashboard">
-      <!-- Player 1 Card -->
-      <div class="player-card active-turn" id="player1-card">
-        <div class="player-avatar-box">
-          <span class="player-avatar" id="p1-avatar">👤</span>
-        </div>
-        <div class="player-info">
-          <span class="player-name" id="p1-name">You</span>
-          <span class="player-symbol symbol-o">O</span>
-        </div>
-        <span class="turn-status-badge" id="p1-status">Your Turn</span>
-      </div>
-
-      <!-- Center VS Badge -->
-      <div class="vs-divider">
-        <span class="vs-text">VS</span>
-      </div>
-
-      <!-- Player 2 / Computer Card -->
-      <div class="player-card" id="player2-card">
-        <div class="player-avatar-box ai-avatar-box">
-          <span class="player-avatar" id="p2-avatar">🤖</span>
-        </div>
-        <div class="player-info">
-          <span class="player-name" id="p2-name">Cyber AI</span>
-          <span class="player-symbol symbol-x">X</span>
-        </div>
-        <span class="turn-status-badge" id="p2-status">Waiting</span>
-      </div>
-    </div>
-
-    <!-- Game Board -->
-    <div class="container">
-      <div class="game">
-        <button class="box"></button>
-        <button class="box"></button>
-        <button class="box"></button>
-        <button class="box"></button>
-        <button class="box"></button>
-        <button class="box"></button>
-        <button class="box"></button>
-        <button class="box"></button>
-        <button class="box"></button>
-      </div>
-    </div>
-
-    <button id="reset-btn">Reset Game</button>
-  </main>
-
-  <script src="app.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tic Tac Toe & 15×15 Gomoku Matrix | Cyberpunk Arena</title>
+    <meta name="description" content="Experience high-tech 3x3 Tic Tac Toe and 15x15 Gomoku battle against Cyber AI or pass-and-play with friends. Features match history records, move undo, and rich neon cyber aesthetics." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Outfit:wght@400;600;700;800;900&family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
